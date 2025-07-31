@@ -1,7 +1,7 @@
-from .userModel import User, UserCreate
+from .userModel import User, RegisterUser
 from .productModel import Product
 
-__all__ = ["User", "UserCreate", "Product"]
+__all__ = ["User", "RegisterUser", "Product"]
 
 
 

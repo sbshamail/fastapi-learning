@@ -1,5 +1,5 @@
 from practice.mvc.models.base import TimeStampedModel
-from pydantic import EmailStr
+from pydantic import EmailStr,BaseModel
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List
 from enum import Enum
@@ -22,7 +22,7 @@ class User(TimeStampedModel, table=True):
 
 
 
-class UserCreate(SQLModel):
+class RegisterUser(SQLModel):
     full_name: str
     email: EmailStr
     password: str
@@ -33,3 +33,7 @@ class UserRead(SQLModel):
     full_name: str
     email: EmailStr
     role: Role
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str

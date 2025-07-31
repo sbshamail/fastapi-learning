@@ -1,12 +1,21 @@
 from typing import Dict, Optional
 from passlib.context import CryptContext
 from jose import jwt,JWTError
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+from sqlmodel import Session, select
+from practice.mvc.models.userModel import User
 from practice.config import SECRET_KEY,ACCESS_TOKEN_EXPIRE_MINUTES
 
 ALGORITHM = "HS256"
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+## get user
+def exist_user(db: Session, email: str):
+    user = db.exec(select(User).where(User.email == email)).first()
+    return user
+
 
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
@@ -16,17 +25,20 @@ def verify_password(plain: str, password_hashed: str) -> bool:
     return pwd_context.verify(plain, password_hashed)
 
 
-def create_access_token(data: dict,refresh: Optional[bool] = False, expires_delta: timedelta = None):
-  
-    expiration_time = (datetime.now(datetime.timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-                if not refresh
-                        else None  # If refresh is True, no expiration
-              
-              )
-  
+def create_access_token(
+        user_data: dict,
+        refresh: Optional[bool] = False, 
+        expires: timedelta = None
+    ):
+
+    if refresh:
+        expire = datetime.now(timezone.utc) + timedelta(days=30)
+    else:
+        expire = datetime.now(timezone.utc) + (expires or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+          
     payload = {
-        "user": data,
-        "exp": expiration_time,
+        "user": user_data,
+        "exp": expire,
         "refresh": refresh,
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
@@ -34,14 +46,14 @@ def create_access_token(data: dict,refresh: Optional[bool] = False, expires_delt
 
 def decode_token(token: str) -> Optional[Dict]:
     try:
-        token_data = jwt.decode(
+        decode = jwt.decode(
             token,
             SECRET_KEY,
             algorithms=[ALGORITHM],
             options={"verify_exp": True},  # Ensure expiration is verified
         )
 
-        return token_data
+        return decode
 
     except JWTError as e:
         print(f"Token decoding failed: {e}")
