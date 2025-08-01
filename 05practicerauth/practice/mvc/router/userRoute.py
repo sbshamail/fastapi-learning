@@ -1,5 +1,6 @@
 # FastAPI's routing module, dependency injection, and HTTP exception class
 from datetime import datetime, timedelta, timezone
+from typing import Any, Dict
 from fastapi import APIRouter, Depends, HTTPException
 
 
@@ -8,7 +9,7 @@ from sqlmodel import Session, select
 
 # Your custom user model and schema
 from practice.config import ACCESS_TOKEN_EXPIRE_MINUTES
-from practice.mvc.core.security import create_access_token, exist_user, hash_password, verify_password
+from practice.mvc.core.security import create_access_token, exist_user, hash_password, require_admin, require_signin, verify_password
 from practice.mvc.models.userModel import LoginRequest, User, RegisterUser, UserRead
 
 # Session provider (dependency injection for DB access)
@@ -49,10 +50,10 @@ def login_user(request: LoginRequest, session: Session = Depends(get_session)):
 
 
     access_token = create_access_token(
-        user_data={"email": user.email, "id": user.id},
+        user_data={"email": user.email, "id": user.id, "role": user.role},
     )
     refresh_token = create_access_token(
-        user_data={"email": user.email, "id": user.id},
+        user_data={"email": user.email, "id": user.id,"role": user.role},
         refresh=True,
     )
 
@@ -72,6 +73,16 @@ def login_user(request: LoginRequest, session: Session = Depends(get_session)):
         }
 
     return api_response(200, "Login successful",content)
+
+@router.get("/testauth", response_model=dict)
+def test_auth(user: dict = Depends(require_signin)):
+    return api_response(200, "Token is valid", {
+        "user": user
+    })
+@router.get("/testadmin")
+def get_admin_data(user: dict = Depends(require_admin)):
+    return {"message": f"Hello Admin {user['email']}"}
+
 # ✅ READ ALL
 @router.get("/all")  # no response_model
 def get_users(session: Session = Depends(get_session)):

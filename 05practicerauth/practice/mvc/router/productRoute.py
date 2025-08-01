@@ -2,14 +2,15 @@
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, select
 from practice.lib.response import api_response
+from practice.mvc.core.security import require_signin
 from practice.mvc.models.productModel import Product, ProductCreate, ProductRead
 from practice.lib.db import get_session
 from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/product", tags=["product"])
-
+require_signin=Depends(require_signin)
 @router.post("/create", response_model=Product)
-def create(request: ProductCreate, session: Session = Depends(get_session)):
+def create(request: ProductCreate, session: Session = Depends(get_session),auth=require_signin):
     # Create Product from incoming request data
     product = Product(**request.model_dump())  # like new Product(req.body)
     

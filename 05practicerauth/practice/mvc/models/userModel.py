@@ -4,7 +4,6 @@ from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List
 from enum import Enum
 class Role(str, Enum):
-    master = "master"
     admin = "admin"
     user = "user"
 
