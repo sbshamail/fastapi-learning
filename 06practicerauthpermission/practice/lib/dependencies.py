@@ -1,7 +1,9 @@
-from fastapi import Depends
 from typing import Annotated, Any, Dict
-from practice.lib.db import get_session
+
+from fastapi import Depends
 from sqlmodel import Session
 
+from practice.lib.db import get_session
 
-db_dependency = Annotated[Session, Depends(get_session)]
+
+GetSession = Annotated[Session, Depends(get_session)]

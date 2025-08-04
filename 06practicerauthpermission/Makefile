@@ -7,6 +7,9 @@ run:
 generate:
 	alembic revision --autogenerate -m "auto"
 
+downgrade:
+	alembic downgrade -1"
+
 head:
 	alembic upgrade head
 

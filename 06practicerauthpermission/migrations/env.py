@@ -1,19 +1,26 @@
-
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
 from alembic import context
+from sqlalchemy import (
+    engine_from_config,
+    pool,
+)
 from sqlmodel import SQLModel
-from practice.mvc.models import User, Product 
-_ = (User, Product)
-from dotenv import load_dotenv
+
+from practice.mvc.models import (
+    Product,
+    Role,
+    User,
+)
+
+_ = (User, Product, Role)
 import os
 
-load_dotenv() 
+from dotenv import load_dotenv
 
-DATABASE_URL=os.getenv("DATABASE_URL")
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -68,14 +75,18 @@ def run_migrations_online() -> None:
 
     """
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        config.get_section(
+            config.config_ini_section,
+            {},
+        ),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
         )
 
         with context.begin_transaction():

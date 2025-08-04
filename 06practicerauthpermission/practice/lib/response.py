@@ -1,16 +1,22 @@
 from typing import Any, Optional
-from fastapi.responses import JSONResponse
-from fastapi.encoders import jsonable_encoder
+
 from fastapi import HTTPException
+from fastapi.encoders import (
+    jsonable_encoder,
+)
+from fastapi.responses import (
+    JSONResponse,
+)
+
 
 def api_response(
     code: int,
     detail: str,
     data: Optional[Any] = None,
-    total: Optional[int] = None
+    total: Optional[int] = None,
 ):
     content = {
-        "success": 1 if code < 300 else 0,
+        "success": (1 if code < 300 else 0),
         "detail": detail,
         "data": jsonable_encoder(data),
     }
@@ -20,6 +26,12 @@ def api_response(
 
     # Raise error if code >= 400
     if code >= 400:
-        raise HTTPException(status_code=code, detail=detail)
+        raise HTTPException(
+            status_code=code,
+            detail=detail,
+        )
 
-    return JSONResponse(status_code=code, content=content)
+    return JSONResponse(
+        status_code=code,
+        content=content,
+    )

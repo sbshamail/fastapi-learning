@@ -1,7 +1,15 @@
 from datetime import datetime
 from typing import Optional
-from practice.mvc.models.base import TimeStampedModel
-from sqlmodel import SQLModel, Field, Relationship
+
+from sqlmodel import (
+    Field,
+    Relationship,
+    SQLModel,
+)
+
+from practice.mvc.models.base import (
+    TimeStampedModel,
+)
 
 
 class Product(TimeStampedModel, table=True):
@@ -19,20 +27,26 @@ class ProductBase(SQLModel):
     description: Optional[str] = None
     price: float
 
+
 class ProductCreate(ProductBase):
     user_id: int  # foreign key reference to User
+
 
 class ProductUpdate(SQLModel):
     name: Optional[str] = None
     description: Optional[str] = None
     price: Optional[float] = None
 
+
 class UserReadForProduct(SQLModel):
     id: int
     full_name: str
     email: str
+
     class Config:
         orm_mode = True
+
+
 class ProductRead(SQLModel):
     id: int
     name: str
@@ -41,5 +55,6 @@ class ProductRead(SQLModel):
     created_at: datetime
     updated_at: Optional[datetime] = None
     owner: Optional[UserReadForProduct] = None
+
     class Config:
         orm_mode = True
