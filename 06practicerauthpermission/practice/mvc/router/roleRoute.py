@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends
 from sqlmodel import select
 
-from practice.lib import GetSession, api_response
+from practice.lib import GetSession, api_response, updateOp
 from practice.mvc.core.security import require_admin, require_signin
 from practice.mvc.models.roleModel import Role, RoleCreate, RoleUpdate, RoleRead
 
@@ -27,11 +27,13 @@ def update_role(id: int, request: RoleUpdate, session: GetSession, user=requireA
     role = session.get(Role, id)
     if not role:
         api_response(404, "Role not found")
+    # role_data = request.model_dump(exclude_unset=True)
+    # for key, value in role_data.items():
+    #     setattr(role, key, value)
+    # role.updated_at = datetime.now(timezone.utc)
+    # upper comment is replace with updateOp
+    updateOp(role, request)
 
-    role_data = request.model_dump(exclude_unset=True)
-    for key, value in role_data.items():
-        setattr(role, key, value)
-    role.updated_at = datetime.now(timezone.utc)
     session.add(role)
     session.commit()
     session.refresh(role)

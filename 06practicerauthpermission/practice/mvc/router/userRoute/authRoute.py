@@ -5,7 +5,7 @@ from datetime import (
     timezone,
 )
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.orm import selectinload
 
 # SQLModel's session and query builder
@@ -29,6 +29,7 @@ from practice.mvc.core.security import (
     require_permission,
     require_signin,
     verify_password,
+    verify_refresh_token,
 )
 from practice.mvc.models.roleModel import (
     Role,
@@ -121,6 +122,7 @@ def register_user(
 @router.post("/login", response_model=dict)
 def login_user(
     request: LoginRequest,
+    response: Response,
     session: GetSession,
 ):
     user = session.exec(
@@ -155,7 +157,14 @@ def login_user(
     )
 
     user_read = UserRead.model_validate(user)
-
+    # cookie will test in postman and frontend only with tag credential:true
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        samesite="strict",
+        max_age=30 * 24 * 60 * 60,  # 30 days
+    )
     content = {
         "message": "Login successful",
         "token_type": "bearer",
@@ -166,6 +175,42 @@ def login_user(
     }
 
     return api_response(200, "Login successful", content)
+
+
+@router.post(
+    "/refresh",
+)
+def refresh_token(
+    refresh_token: str,
+    user: dict = Depends(require_signin),
+):
+    print(refresh_token)
+    if not refresh_token:
+        api_response(401, "Missing refresh token")
+
+    payload = verify_refresh_token(refresh_token)
+    if not payload:
+        raise api_response(401, "Invalid refresh token")
+
+    access_token = create_access_token(user)
+    new_refresh_token = create_access_token(user_data=user, refresh=True)
+
+    return api_response(
+        200,
+        "Refresh",
+        {
+            "access_token": access_token,
+            "refresh_token": new_refresh_token,
+            "user": user,
+        },
+    )
+
+
+@router.post("/logout")
+def logout(response: Response):
+    response.delete_cookie("refresh_token")
+    response.delete_cookie("access_token")
+    return {"message": "Logged out"}
 
 
 @router.get("/testauth", response_model=dict)
@@ -190,4 +235,4 @@ def get_admin_data(
 def get_admin_data(
     user=Depends(require_permission("all")),
 ):
-    return {"message": f"Hello Admin {user['email']}"}
+    return {"message": f"Hello Admin {user}"}

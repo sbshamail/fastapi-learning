@@ -1,14 +1,11 @@
-from fastapi import APIRouter, Depends
+from typing import Annotated, List
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import selectinload
-from sqlmodel import Session, select
+from sqlmodel import Session, or_, select
 
 from practice.lib.db import get_session
-from practice.lib.response import (
-    api_response,
-)
-from practice.mvc.core.security import (
-    require_signin,
-)
+from practice.lib import api_response, GetSession, requirePermission, requireSignin
+
 from practice.mvc.models.productModel import (
     Product,
     ProductCreate,
@@ -16,18 +13,19 @@ from practice.mvc.models.productModel import (
 )
 
 router = APIRouter(prefix="/product", tags=["product"])
-require_signin = Depends(require_signin)
 
 
 @router.post("/create", response_model=Product)
-def create(
+def create_product(
     request: ProductCreate,
-    session: Session = Depends(get_session),
-    auth=require_signin,
+    session: GetSession,
+    auth=requirePermission("product_create"),
 ):
     # Create Product from incoming request data
     product = Product(**request.model_dump())  # like new Product(req.body)
+    product.user_id = auth["id"]
 
+    print(product)
     # Save to DB
     session.add(product)
     session.commit()
@@ -39,15 +37,50 @@ def create(
     return api_response(200, "Product created", product)
 
 
+def filterSearchTerms(
+    Model,
+    searchTerm: str | None,
+    searchTerms: list[str],
+    statement,
+):
+    if not searchTerm:
+        return statement  # Don't change it if no search term
+
+    searchFilters = [
+        getattr(Model, field).ilike(f"%{searchTerm}%") for field in searchTerms
+    ]
+
+    return statement.where(or_(*searchFilters))
+
+
+def paginate(
+    statement,
+    page: int = 1,
+    limit: int = Query(10, ge=1, le=100),
+):
+    offset = (page - 1) * limit
+    return statement.offset(offset).limit(limit)
+
+
 @router.get(
-    "/all",
+    "/list",
     response_model=list[ProductRead],
 )
-def list(
-    session: Session = Depends(get_session),
+def list_product(
+    session: GetSession,
+    # auth=requireSignin,
+    searchTerm: str = None,
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
 ):
+    searchTerms = [
+        "name",
+        "description",
+    ]
     # selectinload like populate in mongoose
     statement = select(Product).options(selectinload(Product.owner))  # JOIN user
+    statement = filterSearchTerms(Product, searchTerm, searchTerms, statement)
+    statement = paginate(statement, page, limit)
     data = session.exec(statement).all()
 
     if not data:

@@ -22,14 +22,10 @@ class Product(TimeStampedModel, table=True):
     owner: Optional["User"] = Relationship(back_populates="products")
 
 
-class ProductBase(SQLModel):
+class ProductCreate(SQLModel):
     name: str
     description: Optional[str] = None
     price: float
-
-
-class ProductCreate(ProductBase):
-    user_id: int  # foreign key reference to User
 
 
 class ProductUpdate(SQLModel):

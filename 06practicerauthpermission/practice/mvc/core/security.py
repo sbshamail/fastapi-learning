@@ -62,7 +62,7 @@ def create_access_token(
         expire = datetime.now(timezone.utc) + timedelta(days=30)
     else:
         expire = datetime.now(timezone.utc) + (
-            expires or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            expires or timedelta(days=ACCESS_TOKEN_EXPIRE_MINUTES)
         )
 
     payload = {
@@ -76,6 +76,14 @@ def create_access_token(
         algorithm=ALGORITHM,
     )
     return token
+
+
+def verify_refresh_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except JWTError:
+        return None
 
 
 def decode_token(
@@ -155,8 +163,13 @@ def require_permission(permission: str):
     ):
         role = user.get("role")
         permissions = user.get("permissions", [])
-        if not role or permission not in permissions:
+        if not role:
             api_response(403, "Permission denied")
-        return user
+
+        # Allow all if "all" is in permissions
+        if "all" in permissions or permission in permissions:
+            return user
+
+        api_response(403, "Permission denied")
 
     return permission_checker
