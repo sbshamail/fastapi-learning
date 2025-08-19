@@ -25,13 +25,13 @@ router = APIRouter(prefix="/product", tags=["product"])
 def create_product(
     request: ProductCreate,
     session: GetSession,
-    auth=requirePermission("product_create"),
+    auth=requireSignin,
+    # auth=requirePermission("product_create"),
 ):
     # Create Product from incoming request data
     product = Product(**request.model_dump())  # like new Product(req.body)
     product.user_id = auth["id"]
 
-    print(product)
     # Save to DB
     session.add(product)
     session.commit()

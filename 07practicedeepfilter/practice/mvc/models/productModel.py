@@ -40,7 +40,7 @@ class UserReadForProduct(SQLModel):
     email: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ProductRead(SQLModel):
@@ -53,4 +53,4 @@ class ProductRead(SQLModel):
     owner: Optional[UserReadForProduct] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True

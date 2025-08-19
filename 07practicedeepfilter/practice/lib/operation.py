@@ -50,7 +50,7 @@ def listop(
     searchTerm = filters.get("searchTerm")
     columnFilters = filters.get("columnFilters")
     dateRange = filters.get("dateRange")
-    numberRange = filters.get("number_range")
+    numberRange = filters.get("numberRange")
     # Apply Filters
     statement = applyFilters(
         statement,
@@ -58,8 +58,8 @@ def listop(
         searchTerm=searchTerm,
         searchFields=searchFields,
         columnFilters=columnFilters,
-        numberRange=numberRange,
         dateRange=dateRange,
+        numberRange=numberRange,
     )
 
     # Total count (before pagination)
