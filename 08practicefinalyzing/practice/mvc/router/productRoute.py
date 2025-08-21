@@ -1,4 +1,4 @@
-from typing import Annotated, List, Optional, Tuple
+from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, or_, select
@@ -67,7 +67,7 @@ def list_product(
         "columnFilters": columnFilters,
         "dateRange": dateRange,
         "numberRange": numberRange,
-        "customFilters": customFilters,
+        # "customFilters": customFilters,
     }
     searchFields = [
         "name",

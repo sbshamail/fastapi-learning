@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import json
 
 date_formats = [
     "%d-%m-%Y",
@@ -29,3 +30,7 @@ def parse_date(date_str: str) -> datetime:
         except ValueError:
             continue
     raise ValueError(f"Date '{date_str}' is not in a valid UTC format.")
+
+
+def Print(data, title="Result"):
+    print(f"{title}\n", json.dumps(data, indent=2, default=str))

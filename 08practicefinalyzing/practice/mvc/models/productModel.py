@@ -10,6 +10,7 @@ from sqlmodel import (
 from practice.mvc.models.base import (
     TimeStampedModel,
 )
+from practice.mvc.models.userModel import UserRead
 
 
 class Product(TimeStampedModel, table=True):
@@ -34,15 +35,6 @@ class ProductUpdate(SQLModel):
     price: Optional[float] = None
 
 
-class UserReadForProduct(SQLModel):
-    id: int
-    full_name: str
-    email: str
-
-    class Config:
-        from_attributes = True
-
-
 class ProductRead(SQLModel):
     id: int
     name: str
@@ -50,7 +42,7 @@ class ProductRead(SQLModel):
     price: float
     created_at: datetime
     updated_at: Optional[datetime] = None
-    owner: Optional[UserReadForProduct] = None
+    owner: Optional[UserRead] = None
 
     class Config:
         from_attributes = True

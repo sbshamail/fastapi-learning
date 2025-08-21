@@ -4,12 +4,14 @@ from datetime import (
     timedelta,
     timezone,
 )
-from typing import Any, Dict
+from sqlalchemy.orm import selectinload
+from typing import Any, Dict, Optional
 
 from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
+    Query,
 )
 
 # SQLModel's session and query builder
@@ -25,8 +27,12 @@ from practice.lib import api_response
 
 # Session provider (dependency injection for DB access)
 from practice.lib.db import get_session
+from practice.lib.dependencies import GetSession
+from practice.lib.helpers.utility import Print
+from practice.lib.operation import listop
 from practice.mvc.models.userModel import (
     User,
+    UserRead,
 )
 
 # Create a router with prefix `/user` and group tag `user`
@@ -36,17 +42,55 @@ router = APIRouter(prefix="/user", tags=["user"])
 # ✅ READ ALL
 @router.get("/all")  # no response_model
 def get_users(
-    session: Session = Depends(get_session),
+    session: GetSession,
+    dateRange: Optional[
+        str
+    ] = None,  # JSON string like '["created_at", "01-01-2025", "01-12-2025"]'
+    numberRange: Optional[str] = None,  # JSON string like '["amount", "0", "100000"]'
+    searchTerm: str = None,
+    columnFilters: Optional[str] = Query(
+        None
+    ),  # e.g. '[["name","car"],["description","product"]]'
+    page: int = None,
+    skip: int = 0,
+    limit: int = Query(10, ge=1, le=100),
 ):
-    users = session.exec(select(User)).all()  # SELECT * FROM user
-    if not users or len(users) == 0:
-        return api_response(404, "User not found")
+
+    filters = {
+        "searchTerm": searchTerm,
+        "columnFilters": columnFilters,
+        "dateRange": dateRange,
+        "numberRange": numberRange,
+    }
+    searchFields = [
+        "name",
+        "description",
+        "owner.full_name",
+        "owner.email",
+    ]
+    result = listop(
+        session=session,
+        Model=User,
+        join_options=[selectinload(User.role)],
+        searchFields=searchFields,
+        filters=filters,
+        skip=skip,
+        page=page,
+        limit=limit,
+    )
+
+    if not result["data"]:
+        return api_response(404, "No products found")
+    Print(result, "Products")
+    # Convert each SQLModel Product instance into a UserRead Pydantic model
+    # This ensures relationships like `Role` are included in the serialized output
+    product_list = [UserRead.model_validate(prod) for prod in result["data"]]
 
     return api_response(
         200,
-        "Users fetched",
-        users,
-        len(users),
+        "Products found",
+        product_list,
+        result["total"],
     )
 
 
